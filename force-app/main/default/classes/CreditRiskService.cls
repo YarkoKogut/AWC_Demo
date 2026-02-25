@@ -1,11 +1,5 @@
 
 public with sharing class CreditRiskService {
-    // ── Inner DTO ──────────────────────────────────────────────────────────
-
-    /**
-     * Structured result returned to the LWC. Always populated, even on failure,
-     * so the UI can display a consistent response shape.
-     */
     public class CreditRiskResult {
         @AuraEnabled
         public Boolean success;
@@ -21,16 +15,6 @@ public with sharing class CreditRiskService {
         public Id logId;
     }
 
-    // ── AuraEnabled Methods ────────────────────────────────────────────────
-
-    /**
-     * Performs the credit risk callout for the given Contact.
-     * Always inserts a Credit_Risk_Log__c record, even when the callout fails,
-     * so every button click is fully auditable.
-     *
-     * @param contactId  The Contact record to assess.
-     * @return           CreditRiskResult with outcome details and the new log Id.
-     */
     @AuraEnabled
     public static CreditRiskResult checkCreditRisk(Id contactId) {
         CreditRiskResult result = new CreditRiskResult();
@@ -48,13 +32,6 @@ public with sharing class CreditRiskService {
         return result;
     }
 
-    /**
-     * Returns up to 50 Credit_Risk_Log__c records for the given Contact,
-     * ordered by most recent callout first.
-     *
-     * @param contactId  The Contact whose log history to retrieve.
-     * @return           List of log records, newest first.
-     */
     @AuraEnabled(cacheable=true)
     public static List<Credit_Risk_Log__c> getCreditRiskLogs(Id contactId) {
         return [
@@ -73,12 +50,6 @@ public with sharing class CreditRiskService {
         ];
     }
 
-    // ── Private Helpers ────────────────────────────────────────────────────
-
-    /**
-     * Builds a log record pre-populated with the contact and timestamp.
-     * Defaults Callout_Success__c to false so a crash before DML still records failure.
-     */
     private static Credit_Risk_Log__c initLog(Id contactId) {
         Credit_Risk_Log__c log = new Credit_Risk_Log__c();
         log.Contact__c = contactId;
@@ -87,10 +58,6 @@ public with sharing class CreditRiskService {
         return log;
     }
 
-    /**
-     * Sends the HTTP GET request via the YesNoAPI Named Credential.
-     * Timeout is 10 seconds — sufficient for a lightweight public API.
-     */
     private static HttpResponse makeCallout() {
         HttpRequest req = new HttpRequest();
         req.setEndpoint('callout:YesNoAPI/api');
@@ -99,9 +66,6 @@ public with sharing class CreditRiskService {
         return new Http().send(req);
     }
 
-    /**
-     * Routes the HTTP response to the appropriate handler based on status code.
-     */
     private static void processResponse(
         HttpResponse res,
         Credit_Risk_Log__c log,
@@ -122,10 +86,6 @@ public with sharing class CreditRiskService {
         }
     }
 
-    /**
-     * Parses the JSON body from a 200 response and maps the answer to a risk level.
-     * Expected shape: { "answer": "yes|no|maybe", "forced": false, "image": "..." }
-     */
     private static void parseSuccessResponse(
         String body,
         Credit_Risk_Log__c log,
@@ -148,9 +108,6 @@ public with sharing class CreditRiskService {
         result.imageUrl = imageUrl;
     }
 
-    /**
-     * Maps the API's plain-text answer to a structured risk level picklist value.
-     */
     private static String resolveRiskLevel(String answer) {
         if ('yes'.equalsIgnoreCase(answer))
             return 'High';
@@ -159,10 +116,6 @@ public with sharing class CreditRiskService {
         return 'Unknown';
     }
 
-    /**
-     * Captures any unhandled exception (network timeout, JSON parse error, etc.)
-     * into the log and result so nothing is silently swallowed.
-     */
     private static void handleException(
         Exception ex,
         Credit_Risk_Log__c log,

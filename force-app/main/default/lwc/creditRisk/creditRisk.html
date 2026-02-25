@@ -1,7 +1,6 @@
 <template>
     <lightning-card title="Credit Risk Assessment" icon-name="utility:shield">
         <div class="slds-p-around_medium">
-            <!-- ── Trigger Button ─────────────────────────────────────────── -->
             <div class="slds-m-bottom_medium">
                 <lightning-button
                     label="Check Credit Risk"
@@ -12,7 +11,7 @@
                 ></lightning-button>
             </div>
 
-            <!-- ── Loading State ──────────────────────────────────────────── -->
+
             <template lwc:if={isLoading}>
                 <div class="loading-container slds-m-vertical_medium">
                     <lightning-spinner
@@ -25,7 +24,6 @@
                 </div>
             </template>
 
-            <!-- ── Error Alert ────────────────────────────────────────────── -->
             <template lwc:if={errorMessage}>
                 <div
                     class="slds-notify slds-notify_alert slds-theme_error slds-m-bottom_medium"
@@ -41,7 +39,6 @@
                 </div>
             </template>
 
-            <!-- ── Latest Result Summary ──────────────────────────────────── -->
             <template lwc:if={latestResult}>
                 <div
                     class="result-summary slds-box slds-box_x-small slds-theme_shade slds-m-bottom_medium"
@@ -66,7 +63,6 @@
                 </div>
             </template>
 
-            <!-- ── Assessment History ─────────────────────────────────────── -->
             <div class="slds-m-top_medium">
                 <h3 class="slds-text-heading_small slds-m-bottom_small">
                     Assessment History

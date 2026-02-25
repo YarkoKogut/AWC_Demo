@@ -1,12 +1,3 @@
-/**
- * creditRisk
- * ─────────────────────────────────────────────────────────────────────────────
- * LWC component for the Contact record page that lets users trigger a credit
- * risk assessment via the YesNo API and browse the full history of past checks.
- *
- * UI logic   : state management, getters, event handlers (this file)
- * Service    : CreditRiskService Apex class handles callouts and DML
- */
 import { LightningElement, api, wire } from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import { refreshApex } from '@salesforce/apex';
@@ -48,21 +39,11 @@ const COLUMNS = [
 ];
 
 export default class CreditRisk extends LightningElement {
-    // ── Public API ─────────────────────────────────────────────────────────
-
-    /** Injected by the record page; used as the contactId for all Apex calls. */
     @api recordId;
-
-    // ── UI State ───────────────────────────────────────────────────────────
-
     isLoading = false;
     errorMessage = '';
     latestResult = null;
     columns = COLUMNS;
-
-    // ── Wired Data ─────────────────────────────────────────────────────────
-
-    /** Stored so refreshApex can invalidate the cache after each callout. */
     _wiredLogsResult;
     logs = [];
 
@@ -77,26 +58,20 @@ export default class CreditRisk extends LightningElement {
         }
     }
 
-    // ── Getters (UI Logic) ─────────────────────────────────────────────────
 
     get hasLogs() {
         return this.logs && this.logs.length > 0;
     }
 
-    /** CSS classes applied to the risk badge in the "Latest Result" summary. */
     get riskBadgeClass() {
         if (!this.latestResult) return 'risk-badge';
         return RISK_BADGE_CLASS[this.latestResult.riskLevel] ?? 'risk-badge risk-badge-unknown';
     }
 
-    // ── Event Handlers (UI Logic) ──────────────────────────────────────────
 
     handleCheckCreditRisk() {
-        // Delegate to private service method to keep the handler thin
         this._performCreditRiskCheck();
     }
-
-    // ── Service Methods ────────────────────────────────────────────────────
 
     async _performCreditRiskCheck() {
         this.isLoading = true;
@@ -110,19 +85,12 @@ export default class CreditRisk extends LightningElement {
             this._handleCheckError(error);
         } finally {
             this.isLoading = false;
-            // Refresh the wired log list to include the new record
             if (this._wiredLogsResult) {
                 await refreshApex(this._wiredLogsResult);
             }
         }
     }
 
-    // ── Private Helpers ────────────────────────────────────────────────────
-
-    /**
-     * Dispatches an appropriate toast based on whether the Apex call reported
-     * a successful API response or an API-level failure (log still created).
-     */
     _handleCheckResult(result) {
         if (result.success) {
             this._dispatchToast(
@@ -136,10 +104,6 @@ export default class CreditRisk extends LightningElement {
         }
     }
 
-    /**
-     * Handles unexpected Apex/network exceptions (e.g., callout limit exceeded,
-     * timeout). The log is still created by Apex before the exception propagates.
-     */
     _handleCheckError(error) {
         const message =
             error?.body?.message ??
@@ -153,10 +117,6 @@ export default class CreditRisk extends LightningElement {
         this.dispatchEvent(new ShowToastEvent({ title, message, variant }));
     }
 
-    /**
-     * Maps frozen Apex SObject proxies to plain objects so we can attach
-     * computed display properties (riskBadgeClass) for use in the template.
-     */
     _transformLogs(rawLogs) {
         return rawLogs.map((log) => ({
             Id: log.Id,

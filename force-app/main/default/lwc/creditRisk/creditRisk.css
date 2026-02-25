@@ -1,4 +1,3 @@
-/* ── Risk Level Badges (used only in the "Most Recent Assessment" summary) ──── */
 
 .risk-badge {
     display: inline-flex;
@@ -27,7 +26,6 @@
     color: #ffffff;
 }
 
-/* ── Loading Overlay ───────────────────────────────────────────────────────── */
 
 .loading-container {
     position: relative;
@@ -39,7 +37,6 @@
     width: 100%;
 }
 
-/* ── Result Summary Box ────────────────────────────────────────────────────── */
 
 .result-summary {
     border-left: 4px solid #0070d2;
