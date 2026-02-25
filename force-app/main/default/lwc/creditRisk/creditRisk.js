@@ -58,7 +58,6 @@ export default class CreditRisk extends LightningElement {
         }
     }
 
-
     get hasLogs() {
         return this.logs && this.logs.length > 0;
     }

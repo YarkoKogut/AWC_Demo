@@ -1,5 +1,7 @@
 
 public with sharing class CreditRiskService {
+    
+    
     public class CreditRiskResult {
         @AuraEnabled
         public Boolean success;

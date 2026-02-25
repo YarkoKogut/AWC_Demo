@@ -1,4 +1,6 @@
-# AWC Interview
+# AWC Demo
+
+## LWC: Credit Risk Assessment
 
 ## Iaroslav Kogut
 
