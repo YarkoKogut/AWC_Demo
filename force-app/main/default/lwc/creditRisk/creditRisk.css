@@ -1,0 +1,46 @@
+/* ── Risk Level Badges (used only in the "Most Recent Assessment" summary) ──── */
+
+.risk-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.0625rem;
+    line-height: 1.5rem;
+    text-transform: uppercase;
+}
+
+.risk-badge-high {
+    background-color: #c23934;
+    color: #ffffff;
+}
+
+.risk-badge-low {
+    background-color: #2e844a;
+    color: #ffffff;
+}
+
+.risk-badge-unknown {
+    background-color: #706e6b;
+    color: #ffffff;
+}
+
+/* ── Loading Overlay ───────────────────────────────────────────────────────── */
+
+.loading-container {
+    position: relative;
+    min-height: 5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+/* ── Result Summary Box ────────────────────────────────────────────────────── */
+
+.result-summary {
+    border-left: 4px solid #0070d2;
+}
