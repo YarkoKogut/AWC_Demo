@@ -38,7 +38,7 @@ public with sharing class CreditRiskService {
 
         try {
             HttpResponse res = makeCallout();
-             (res, log, result);
+            processResponse(res, log, result);
         } catch (Exception ex) {
             handleException(ex, log, result);
         }

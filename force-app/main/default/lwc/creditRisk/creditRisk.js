@@ -1,11 +1,11 @@
 /**
  * creditRisk
  * ─────────────────────────────────────────────────────────────────────────────
- * LWC component for the Contact record page. Triggers a credit risk assessment
- * via the YesNo API and displays the full history in a sortable datatable.
+ * LWC component for the Contact record page that lets users trigger a credit
+ * risk assessment via the YesNo API and browse the full history of past checks.
  *
- * UI logic   : state, getters, event handlers (this file)
- * Service    : CreditRiskService Apex class — callouts + DML
+ * UI logic   : state management, getters, event handlers (this file)
+ * Service    : CreditRiskService Apex class handles callouts and DML
  */
 import { LightningElement, api, wire } from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
@@ -24,7 +24,6 @@ const COLUMNS = [
         label: 'Date / Time',
         fieldName: 'Callout_Timestamp__c',
         type: 'date',
-        sortable: true,
         typeAttributes: {
             year: 'numeric',
             month: 'short',
@@ -33,23 +32,9 @@ const COLUMNS = [
             minute: '2-digit'
         }
     },
-    {
-        label: 'Risk Level',
-        fieldName: 'Risk_Level__c',
-        type: 'text',
-        sortable: true
-    },
-    {
-        label: 'API Answer',
-        fieldName: 'API_Answer__c',
-        type: 'text'
-    },
-    {
-        label: 'HTTP Status',
-        fieldName: 'HTTP_Status_Code__c',
-        type: 'number',
-        cellAttributes: { alignment: 'left' }
-    },
+    { label: 'Risk Level',   fieldName: 'Risk_Level__c',       type: 'text' },
+    { label: 'API Answer',   fieldName: 'API_Answer__c',        type: 'text' },
+    { label: 'HTTP Status',  fieldName: 'HTTP_Status_Code__c',  type: 'number', cellAttributes: { alignment: 'left' } },
     {
         label: 'Status',
         fieldName: 'statusText',
@@ -59,12 +44,7 @@ const COLUMNS = [
             iconAlternativeText: { fieldName: 'statusText' }
         }
     },
-    {
-        label: 'Error Details',
-        fieldName: 'Error_Message__c',
-        type: 'text',
-        wrapText: true
-    }
+    { label: 'Error Details', fieldName: 'Error_Message__c',   type: 'text', wrapText: true }
 ];
 
 export default class CreditRisk extends LightningElement {
@@ -79,11 +59,10 @@ export default class CreditRisk extends LightningElement {
     errorMessage = '';
     latestResult = null;
     columns = COLUMNS;
-    sortedBy = 'Callout_Timestamp__c';
-    sortedDirection = 'desc';
 
     // ── Wired Data ─────────────────────────────────────────────────────────
 
+    /** Stored so refreshApex can invalidate the cache after each callout. */
     _wiredLogsResult;
     logs = [];
 
@@ -104,25 +83,17 @@ export default class CreditRisk extends LightningElement {
         return this.logs && this.logs.length > 0;
     }
 
+    /** CSS classes applied to the risk badge in the "Latest Result" summary. */
     get riskBadgeClass() {
         if (!this.latestResult) return 'risk-badge';
-        return (
-            RISK_BADGE_CLASS[this.latestResult.riskLevel] ??
-            'risk-badge risk-badge-unknown'
-        );
+        return RISK_BADGE_CLASS[this.latestResult.riskLevel] ?? 'risk-badge risk-badge-unknown';
     }
 
     // ── Event Handlers (UI Logic) ──────────────────────────────────────────
 
     handleCheckCreditRisk() {
+        // Delegate to private service method to keep the handler thin
         this._performCreditRiskCheck();
-    }
-
-    handleSort(event) {
-        const { fieldName, sortDirection } = event.detail;
-        this.sortedBy = fieldName;
-        this.sortedDirection = sortDirection;
-        this.logs = this._sortLogs([...this.logs], fieldName, sortDirection);
     }
 
     // ── Service Methods ────────────────────────────────────────────────────
@@ -139,6 +110,7 @@ export default class CreditRisk extends LightningElement {
             this._handleCheckError(error);
         } finally {
             this.isLoading = false;
+            // Refresh the wired log list to include the new record
             if (this._wiredLogsResult) {
                 await refreshApex(this._wiredLogsResult);
             }
@@ -147,6 +119,10 @@ export default class CreditRisk extends LightningElement {
 
     // ── Private Helpers ────────────────────────────────────────────────────
 
+    /**
+     * Dispatches an appropriate toast based on whether the Apex call reported
+     * a successful API response or an API-level failure (log still created).
+     */
     _handleCheckResult(result) {
         if (result.success) {
             this._dispatchToast(
@@ -160,6 +136,10 @@ export default class CreditRisk extends LightningElement {
         }
     }
 
+    /**
+     * Handles unexpected Apex/network exceptions (e.g., callout limit exceeded,
+     * timeout). The log is still created by Apex before the exception propagates.
+     */
     _handleCheckError(error) {
         const message =
             error?.body?.message ??
@@ -174,8 +154,8 @@ export default class CreditRisk extends LightningElement {
     }
 
     /**
-     * Maps frozen Apex SObject proxies to plain objects. Computes display
-     * fields (statusText, statusIconName) expected by the datatable columns.
+     * Maps frozen Apex SObject proxies to plain objects so we can attach
+     * computed display properties (riskBadgeClass) for use in the template.
      */
     _transformLogs(rawLogs) {
         return rawLogs.map((log) => ({
@@ -185,22 +165,9 @@ export default class CreditRisk extends LightningElement {
             HTTP_Status_Code__c: log.HTTP_Status_Code__c,
             Callout_Success__c: log.Callout_Success__c,
             statusText: log.Callout_Success__c ? 'Success' : 'Failed',
-            statusIconName: log.Callout_Success__c
-                ? 'utility:success'
-                : 'utility:error',
+            statusIconName: log.Callout_Success__c ? 'utility:success' : 'utility:error',
             Error_Message__c: log.Error_Message__c ?? '',
             Callout_Timestamp__c: log.Callout_Timestamp__c
         }));
-    }
-
-    _sortLogs(data, field, direction) {
-        const factor = direction === 'asc' ? 1 : -1;
-        return data.sort((a, b) => {
-            const valA = a[field] ?? '';
-            const valB = b[field] ?? '';
-            if (valA < valB) return -1 * factor;
-            if (valA > valB) return 1 * factor;
-            return 0;
-        });
     }
 }
